@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Properties;
 
+import static org.junit.jupiter.api.Assumptions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 //@TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -199,35 +200,58 @@ class CuentaTest {
 
     @Test
     @EnabledIfSystemProperty(named = "ENV", matches = "dev")
-    void testDev(){
+    void testDev() {
     }
 
     @Test
-    void imprimirVariablesAmbiente(){
-        Map<String, String> getenv = System.getenv();
-        getenv.forEach((key, value) -> System.out.println(key + ": " + value));
+    void imprimirVariablesAmbiente() {
+        Map<String, String> getEnv = System.getenv();
+        getEnv.forEach((key, value) -> System.out.println(key + ": " + value));
     }
 
     @Test
     @EnabledIfEnvironmentVariable(named = "JAVA_HOME", matches = ".*17.*")
-    void testJavaHome(){
+    void testJavaHome() {
     }
 
     @Test
     @EnabledIfEnvironmentVariable(named = "NUMBER_OF_PROCESSORS", matches = "20")
-    void testProcesadores(){
+    void testProcesadores() {
         System.out.println("Numero de processadores: " + Runtime.getRuntime().availableProcessors());
     }
 
     @Test
     @EnabledIfEnvironmentVariable(named = "ENVIRONMENT", matches = "dev")
-    void testEnv(){
+    void testEnv() {
     }
+
     @Test
     @EnabledIfEnvironmentVariable(named = "ENVIRONMENT", matches = "prod")
-    void testEnvProdDisabled(){
+    void testEnvProdDisabled() {
     }
 
+    @Test
+    @DisplayName("test Saldo Cuenta Dev")
+    void testSaldoCuentaDev() {
+        boolean esDev = "dev".equals(System.getProperty("ENV"));
+        assumeTrue(esDev);
 
+        assertNotNull(cuenta.getSaldo());
+        assertEquals(1000.12345, cuenta.getSaldo().doubleValue());
+        assertFalse(cuenta.getSaldo().compareTo(BigDecimal.ZERO) < 0);
+        assertTrue(cuenta.getSaldo().compareTo(BigDecimal.ZERO) > 0);
+    }
 
+    @Test
+    @DisplayName("test Saldo Cuenta Dev 2")
+    void testSaldoCuentaDev2() {
+        boolean esDev = "dev".equals(System.getProperty("ENV"));
+        assumingThat(esDev, () -> {
+            assertNotNull(cuenta.getSaldo());
+            assertEquals(1000.12345, cuenta.getSaldo().doubleValue());
+            assertFalse(cuenta.getSaldo().compareTo(BigDecimal.ZERO) < 0);
+            assertTrue(cuenta.getSaldo().compareTo(BigDecimal.ZERO) > 0);
+        });
+    }
 }
+
