@@ -1,20 +1,42 @@
 package com.juancarlos.junit5app.models;
 
 import com.juancarlos.junit5app.exceptions.DineroInsuficienteException;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.condition.*;
 
 import java.math.BigDecimal;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CuentaTest {
+    Cuenta cuenta;
+
+    @BeforeEach
+    void initMetodoTest() {
+        this.cuenta = new Cuenta("JuanCarlos", new BigDecimal("1000.12345"));
+        System.out.println("Iniciando Metodo de prueba");
+    }
+
+    @AfterEach
+    void finalizarMetodoTest() {
+        System.out.println("Finalizando Metodo de prueba");
+    }
+
+    @BeforeAll
+    static void beforeAll() {
+        System.out.println("--- INICIANDO EL TEST ---");
+    }
+
+    @AfterAll
+    static void afterAll() {
+        System.out.println("--- FINALIZANDO EL TEST ---");
+    }
 
     @Test
     @DisplayName("Probando nombre de la cuenta corriente")
     void testNombreCuenta() {
-        Cuenta cuenta = new Cuenta("JuanCarlos", new BigDecimal("1000.12345"));
 //        cuenta.setPersona("JuanCarlos");
         String esperado = "JuanCarlos";
         String real = cuenta.getPersona();
@@ -27,7 +49,6 @@ class CuentaTest {
     @Test
     @DisplayName("Probando saldo de la cuenta corriente")
     void testSaldoCuenta() {
-        Cuenta cuenta = new Cuenta("JuanCarlos", new BigDecimal("1000.12345"));
         assertNotNull(cuenta.getSaldo());
         assertEquals(1000.12345, cuenta.getSaldo().doubleValue());
         assertFalse(cuenta.getSaldo().compareTo(BigDecimal.ZERO) < 0);
@@ -37,7 +58,7 @@ class CuentaTest {
     @Test
     @DisplayName("Testeando referencias que sean iguales con metodo equals")
     void testReferenciaCuenta() {
-        Cuenta cuenta = new Cuenta("John Doe", new BigDecimal("8900.9997"));
+        cuenta = new Cuenta("John Doe", new BigDecimal("8900.9997"));
         Cuenta cuenta2 = new Cuenta("John Doe", new BigDecimal("8900.9997"));
 
 //        assertNotEquals(cuenta2, cuenta);
@@ -47,7 +68,6 @@ class CuentaTest {
 
     @Test
     void testDebidoCuenta() {
-        Cuenta cuenta = new Cuenta("JuanCarlos", new BigDecimal("1000.12345"));
         cuenta.debito(new BigDecimal(100));
         assertNotNull(cuenta.getSaldo());
         assertEquals(900, cuenta.getSaldo().intValue());
@@ -56,7 +76,6 @@ class CuentaTest {
 
     @Test
     void testCreditoCuenta() {
-        Cuenta cuenta = new Cuenta("JuanCarlos", new BigDecimal("1000.12345"));
         cuenta.credito(new BigDecimal(100));
         assertNotNull(cuenta.getSaldo());
         assertEquals(1100, cuenta.getSaldo().intValue());
@@ -65,7 +84,6 @@ class CuentaTest {
 
     @Test
     void dineroInsuficienteException() {
-        Cuenta cuenta = new Cuenta("JuanCarlos", new BigDecimal("1000.12345"));
         Exception exception = assertThrows(DineroInsuficienteException.class, () -> {
             cuenta.debito(new BigDecimal(1500));
         });
@@ -76,34 +94,34 @@ class CuentaTest {
 
     @Test
     void testTransferirDineroCuenta() {
-        Cuenta cuenta1 = new Cuenta("John Doe", new BigDecimal("2500"));
-        Cuenta cuenta2 = new Cuenta("Andres", new BigDecimal("1500.9898"));
+        cuenta = new Cuenta("John Doe", new BigDecimal("2500"));
+        Cuenta cuenta2 = new Cuenta("JuanCarlos", new BigDecimal("1500.9898"));
 
         Banco banco = new Banco();
         banco.setNombre("Banco del Estado");
-        banco.transferir(cuenta2, cuenta1, new BigDecimal(500));
+        banco.transferir(cuenta2, cuenta, new BigDecimal(500));
         assertEquals("1000.9898", cuenta2.getSaldo().toPlainString());
-        assertEquals("3000", cuenta1.getSaldo().toPlainString());
+        assertEquals("3000", cuenta.getSaldo().toPlainString());
     }
 
     @Test
     // @Disabled // Salta este test
     @DisplayName("Probando relaciones entre la cuenta y el banco con assertAll")
     void testRelacionBancoCuenta() {
-        Cuenta cuenta1 = new Cuenta("John Doe", new BigDecimal("2500"));
+        cuenta = new Cuenta("John Doe", new BigDecimal("2500"));
         Cuenta cuenta2 = new Cuenta("JuanCarlos", new BigDecimal("1500.9898"));
 
         Banco banco = new Banco();
-        banco.addCuenta(cuenta1);
+        banco.addCuenta(cuenta);
         banco.addCuenta(cuenta2);
 
 
         banco.setNombre("Banco del Estado");
-        banco.transferir(cuenta2, cuenta1, new BigDecimal(500));
+        banco.transferir(cuenta2, cuenta, new BigDecimal(500));
         assertAll(() -> assertEquals("1000.9898", cuenta2.getSaldo().toPlainString()),
-                () -> assertEquals("3000", cuenta1.getSaldo().toPlainString()),
+                () -> assertEquals("3000", cuenta.getSaldo().toPlainString()),
                 () -> assertEquals(2, banco.getCuentas().size()),
-                () -> assertEquals("Banco del Estado", cuenta1.getBanco().getNombre()),
+                () -> assertEquals("Banco del Estado", cuenta.getBanco().getNombre()),
                 () -> assertEquals("JuanCarlos", banco.getCuentas().stream()
                         .filter(c -> c.getPersona().equals("JuanCarlos"))
                         .findFirst()
@@ -112,4 +130,76 @@ class CuentaTest {
                         .anyMatch(c -> c.getPersona().equals("JuanCarlos")))
         );
     }
+
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void testSoloWindows() {
+    }
+
+    @Test
+    @EnabledOnOs({OS.LINUX, OS.MAC})
+    void testSoloLinuxMax() {
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS)
+    void testNoWindows() {
+    }
+
+    @Test
+    @EnabledOnJre(JRE.JAVA_19)
+    void SoloJdk19() {
+    }
+
+    @Test
+    @EnabledOnJre(JRE.JAVA_17)
+    void SoloJdk17() {
+    }
+
+    @Test
+    @DisabledOnJre(JRE.JAVA_17)
+    void TestNoJdk17() {
+    }
+
+    @Test
+    void imprimirSystemProperties() {
+        Properties properties = System.getProperties();
+        properties.forEach((key, value) -> System.out.println(key + ": " + value));
+    }
+
+    @Test
+    @EnabledIfSystemProperty(named = "java.version", matches = "17.*")
+    void testJavaVersion() {
+        String version = System.getProperty("java.version");
+        System.out.println(version);
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named = "os.arch", matches = ".*32.*")
+    void testSolo64() {
+        String arch = System.getProperty("os.arch");
+        System.out.println(arch);
+    }
+
+    @Test
+    @EnabledIfSystemProperty(named = "os.arch", matches = ".*32.*")
+    void testNo64() {
+        String arch = System.getProperty("os.arch");
+        System.out.println(arch);
+    }
+
+    @Test
+    @EnabledIfSystemProperty(named = "user.name", matches = "juanc")
+    void testUsername() {
+        String username = System.getProperty("user.name");
+        System.out.println(username);
+    }
+
+    @Test
+    @EnabledIfSystemProperty(named = "ENV", matches = "dev")
+    void testDev(){
+
+    }
+
 }
